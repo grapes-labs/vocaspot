@@ -15,7 +15,8 @@ function createTooltip() {
     '<div class="vs-definition"></div>' +
     '<div class="vs-example"></div>' +
     '<div class="vs-synonyms"></div>' +
-    '<div class="vs-links"></div>';
+    '<div class="vs-links"></div>' +
+    '<button class="vs-full-def">Full definition &#x2192;</button>';
   document.body.appendChild(el);
 }
 
@@ -93,6 +94,19 @@ function injectTooltipStyles() {
     '#vs-tooltip .vs-links { display: flex; gap: 8px; font-size: 13px; }',
     '#vs-tooltip .vs-links a { color: #0D9488; text-decoration: none; }',
     '#vs-tooltip .vs-links a:hover { text-decoration: underline; }',
+    '#vs-tooltip .vs-full-def {',
+    '  margin-top: 10px;',
+    '  width: 100%;',
+    '  padding: 8px 0;',
+    '  background: #0D9488;',
+    '  color: white;',
+    '  border: none;',
+    '  border-radius: 6px;',
+    '  font-size: 13px;',
+    '  cursor: pointer;',
+    '  font-family: inherit;',
+    '}',
+    '#vs-tooltip .vs-full-def:hover { background: #0f766e; }',
   ].join('\n');
   document.head.appendChild(style);
 }
@@ -199,6 +213,14 @@ function showTooltip(span, data) {
     ' | ' +
     `<a href="https://www.merriam-webster.com/dictionary/${enc}" target="_blank" rel="noopener">Merriam-Webster</a>`;
 
+  const fullDefBtn = tip.querySelector('.vs-full-def');
+  fullDefBtn.style.display = '';
+  fullDefBtn.onclick = () => {
+    hideTooltip();
+    populateSidebar(word, span.dataset.lemma || word, span.dataset.level || '', context, definition);
+    showSidebar();
+  };
+
   tip.style.display = 'block';
   _positionTooltip(tip, span);
 }
@@ -215,6 +237,7 @@ function _showLoading(span) {
   tip.querySelector('.vs-example').style.display = 'none';
   tip.querySelector('.vs-synonyms').style.display = 'none';
   tip.querySelector('.vs-links').innerHTML = '';
+  tip.querySelector('.vs-full-def').style.display = 'none';
   tip.style.display = 'block';
   _positionTooltip(tip, span);
 }
@@ -234,6 +257,7 @@ function init() {
 
   injectTooltipStyles();
   createTooltip();
+  injectSidebar().catch(err => console.error('[VocaSpot] sidebar injection failed:', err));
 
   document.addEventListener('click', e => {
     const span = e.target.closest('.vs-highlight');

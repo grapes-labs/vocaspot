@@ -28,6 +28,7 @@
       "js": [
         "lib/compromise.min.js",
         "context_extractor.js",
+        "sidebar/sidebar.js",
         "tooltip.js",
         "highlighter.js",
         "content_script.js"
@@ -41,7 +42,9 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "data/cefr_wordlist.json"
+        "data/cefr_wordlist.json",
+        "sidebar/sidebar.html",
+        "sidebar/sidebar.css"
       ],
       "matches": [
         "http://*/*",

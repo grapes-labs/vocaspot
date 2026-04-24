@@ -309,6 +309,7 @@ function removeHighlights() {
     parent.normalize();
   }
   hideTooltip();
+  hideSidebar();
 }
 
 async function updateWordCount(count) {
