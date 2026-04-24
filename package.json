@@ -1,0 +1,14 @@
+{
+  "name": "vocaspot",
+  "version": "0.1.0",
+  "description": "VocaSpot Chrome extension build scripts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build:icons": "node scripts/generate_icons.js",
+    "build:wordlist": "node scripts/build_wordlist.js"
+  },
+  "dependencies": {
+    "sharp": "^0.34.5"
+  }
+}
