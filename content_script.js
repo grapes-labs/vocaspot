@@ -326,6 +326,7 @@ async function main() {
   );
 
   highlightWords(filtered);
+  init();
 }
 
 // Run after the page is idle so we never block initial render or user interaction.
