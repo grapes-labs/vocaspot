@@ -1,3 +1,5 @@
+const DEBUG = false;
+
 // Noise selectors that should never be treated as article body
 const SKIP_TAGS = new Set(['nav', 'header', 'footer', 'aside']);
 const SKIP_PATTERN = /menu|sidebar|\bad\b|banner|comment|footer|related/i;
@@ -56,7 +58,7 @@ function populateScanSkip(articleNode) {
     const wordCount = firstP.textContent.trim().split(/\s+/).filter(Boolean).length;
     if (wordCount < BYLINE_WORD_THRESHOLD) {
       _scanSkip.add(firstP);
-      console.log(`[VocaSpot] findArticleBody: skipping first <p> (${wordCount} words, likely byline)`);
+      if (DEBUG) console.log(`[VocaSpot] findArticleBody: skipping first <p> (${wordCount} words, likely byline)`);
     }
   }
 }
@@ -70,13 +72,33 @@ function findArticleBody() {
   _scanSkip.clear();
   let result = null;
 
+  // 0. Site-specific selectors — checked first so known-good selectors take
+  //    priority over the heuristic fallbacks below.
+  const siteSelectors = {
+    'www.theguardian.com': '.article-body-commercial-selector',
+    'edition.cnn.com':     '.article__content',
+    // Reuters uses both a class-based and a data-testid-based container
+    // depending on article template; try both before falling back.
+    'www.reuters.com':     '.article-body__content, [data-testid="article-body"]',
+  };
+  const siteSelector = siteSelectors[location.hostname];
+  if (siteSelector) {
+    result = document.querySelector(siteSelector);
+    if (result) {
+      const matched = siteSelector.split(',').find(s => document.querySelector(s.trim()));
+      if (DEBUG) console.log(`[VocaSpot] findArticleBody matched: site-specific "${matched?.trim() ?? siteSelector}"`);
+    }
+  }
+
   // 1. <article> tag
-  const articles = [...document.querySelectorAll('article')].filter(
-    el => !isNoisy(el) && !hasNoisyAncestor(el)
-  );
-  if (articles.length) {
-    console.log('[VocaSpot] findArticleBody matched: <article>');
-    result = articles[0];
+  if (!result) {
+    const articles = [...document.querySelectorAll('article')].filter(
+      el => !isNoisy(el) && !hasNoisyAncestor(el)
+    );
+    if (articles.length) {
+      if (DEBUG) console.log('[VocaSpot] findArticleBody matched: <article>');
+      result = articles[0];
+    }
   }
 
   // 2. <main> tag
@@ -85,7 +107,7 @@ function findArticleBody() {
       el => !isNoisy(el) && !hasNoisyAncestor(el)
     );
     if (mains.length) {
-      console.log('[VocaSpot] findArticleBody matched: <main>');
+      if (DEBUG) console.log('[VocaSpot] findArticleBody matched: <main>');
       result = mains[0];
     }
   }
@@ -103,12 +125,12 @@ function findArticleBody() {
       }
     }
     if (result) {
-      console.log(`[VocaSpot] findArticleBody matched: largest <div> (${result.querySelectorAll('p').length} <p> elements)`);
+      if (DEBUG) console.log(`[VocaSpot] findArticleBody matched: largest <div> (${result.querySelectorAll('p').length} <p> elements)`);
     }
   }
 
   if (!result) {
-    console.log('[VocaSpot] findArticleBody: no article body detected');
+    if (DEBUG) console.log('[VocaSpot] no article body found');
     return null;
   }
 
@@ -133,7 +155,8 @@ const cefrWordlistReady = fetch(chrome.runtime.getURL('data/cefr_wordlist.json')
   .then(r => r.json())
   .then(data => { cefrWordlist = data; })
   .catch(err => {
-    console.error('[VocaSpot] Failed to load CEFR wordlist:', err);
+    console.warn('[VocaSpot] Could not load word list (data/cefr_wordlist.json). ' +
+      'Check the extension is installed correctly. Highlighting disabled.', err);
     throw err;
   });
 
@@ -240,7 +263,7 @@ async function scanArticle(articleNode) {
     }
   }
 
-  console.log(
+  if (DEBUG) console.log(
     `[VocaSpot] scanArticle: ${totalWords} words scanned, ` +
     `${properNounSkips} proper nouns skipped, ${cefrMatches} matched CEFR list`
   );
@@ -267,24 +290,19 @@ function getPosRank(word) {
 }
 
 /**
- * Returns words exactly one CEFR level above userLevel, capped at MAX_HIGHLIGHTS.
+ * Returns words whose cefrLevel exactly matches targetLevel, capped at MAX_HIGHLIGHTS.
  * When the cap applies, nouns are kept first, then verbs, then adjectives, then others.
  *
  * @param {Array<{word, lemma, cefrLevel, textNode, offset}>} words
- * @param {string} userLevel  e.g. "B1"
+ * @param {string} targetLevel  e.g. "B2"
  * @returns {Array<{word, lemma, cefrLevel, textNode, offset}>}
  */
-function filterByUserLevel(words, userLevel) {
-  const levelIndex = CEFR_ORDER.indexOf(userLevel);
-  if (levelIndex === -1) {
-    console.warn(`[VocaSpot] Unknown userLevel: "${userLevel}"`);
+function filterByUserLevel(words, targetLevel) {
+  if (!CEFR_ORDER.includes(targetLevel)) {
+    console.warn(`[VocaSpot] Unknown targetLevel: "${targetLevel}"`);
     return [];
   }
 
-  // C2 is the top level — nothing is one step above it.
-  if (levelIndex === CEFR_ORDER.length - 1) return [];
-
-  const targetLevel = CEFR_ORDER[levelIndex + 1];
   const candidates = words.filter(w => w.cefrLevel === targetLevel);
 
   if (candidates.length <= MAX_HIGHLIGHTS) return candidates;
@@ -322,54 +340,86 @@ async function updateWordCount(count) {
 }
 
 async function main() {
-  const { cefrLevel = 'B1', highlightStyle = 'underline-dashed' } =
-    await chrome.storage.sync.get({ cefrLevel: 'B1', highlightStyle: 'underline-dashed' });
-  console.log(`[VocaSpot] User level: ${cefrLevel}`);
-
-  const articleNode = findArticleBody();
-  if (!articleNode) {
-    console.log('[VocaSpot] main: no article body found, skipping');
-    return;
-  }
-
-  let words;
   try {
-    words = await scanArticle(articleNode);
+    const { targetLevel = 'B2', highlightStyle = 'underline-dashed' } =
+      await chrome.storage.sync.get({ targetLevel: 'B2', highlightStyle: 'underline-dashed' });
+    if (DEBUG) console.log(`[VocaSpot] Target level: ${targetLevel}`);
+
+    const articleNode = findArticleBody();
+    if (!articleNode) {
+      if (DEBUG) console.log('[VocaSpot] no article body found');
+      return;
+    }
+
+    let words;
+    performance.mark('vs-scan-start');
+    try {
+      words = await scanArticle(articleNode);
+    } catch (err) {
+      console.warn('[VocaSpot] main: word scan could not complete:', err);
+      return;
+    }
+    performance.mark('vs-scan-end');
+    performance.measure('VocaSpot: scanArticle', 'vs-scan-start', 'vs-scan-end');
+
+    const filtered = filterByUserLevel(words, targetLevel);
+    if (DEBUG) console.log(
+      `[VocaSpot] main: ${filtered.length} word(s) to highlight:`,
+      filtered.map(w => `${w.word} [${w.lemma}] (${w.cefrLevel})`)
+    );
+
+    highlightWords(filtered, highlightStyle);
+    init();
+    updateWordCount(filtered.length).catch(() => {});
+
+    // Watch for large DOM mutations that indicate a SPA navigated to a new article
+    // (e.g. BBC, Guardian). Disconnect any previous observer first so we don't
+    // accumulate listeners across re-scans.
+    if (_spaObserver) _spaObserver.disconnect();
+    _spaObserver = new MutationObserver((mutations) => {
+      let added = 0;
+      for (const m of mutations) {
+        for (const node of m.addedNodes) {
+          // Skip our own highlight spans to avoid re-triggering on highlightWords().
+          if (node.nodeType === Node.ELEMENT_NODE &&
+              node.classList?.contains('vs-highlight')) continue;
+          added++;
+        }
+      }
+      if (added < 20) return;
+      clearTimeout(_mutationTimer);
+      _mutationTimer = setTimeout(() => {
+        removeHighlights();
+        main();
+      }, 1000);
+    });
+    _spaObserver.observe(document.body, { childList: true, subtree: true });
   } catch (err) {
-    console.error('[VocaSpot] main: scanArticle failed:', err);
-    return;
+    console.warn('[VocaSpot] unexpected error in main — extension did not crash the page:', err);
   }
-
-  const filtered = filterByUserLevel(words, cefrLevel);
-  console.log(
-    `[VocaSpot] main: ${filtered.length} word(s) to highlight:`,
-    filtered.map(w => `${w.word} [${w.lemma}] (${w.cefrLevel})`)
-  );
-
-  highlightWords(filtered, highlightStyle);
-  init();
-  updateWordCount(filtered.length).catch(() => {});
 }
 
 // Run after the page is idle so we never block initial render or user interaction.
-// timeout: 4000 guarantees the callback fires within 4 s even if the page never
+// timeout: 2000 guarantees the callback fires within 2 s even if the page never
 // goes fully idle (common on news sites with continuous ad/analytics scripts).
 // The typeof guard is a safety net; requestIdleCallback is available in all
 // Chromium builds, but an explicit fallback makes the intent clear.
 const scheduleIdle = typeof requestIdleCallback === 'function'
-  ? cb => requestIdleCallback(cb, { timeout: 4000 })
+  ? cb => requestIdleCallback(cb, { timeout: 2000 })
   : cb => setTimeout(cb, 0);
 
 scheduleIdle(async () => {
   const { disabledSites = [] } = await chrome.storage.sync.get({ disabledSites: [] });
   if (disabledSites.includes(window.location.hostname)) {
-    console.log('[VocaSpot] disabled on this site, skipping');
+    if (DEBUG) console.log('[VocaSpot] disabled on this site, skipping');
     return;
   }
   main().catch(err => console.error('[VocaSpot] main error:', err));
 });
 
 let _rescanTimer = null;
+let _mutationTimer = null;
+let _spaObserver = null;
 
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.action !== 'settingsUpdated') return;

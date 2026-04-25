@@ -101,5 +101,5 @@ function highlightWords(wordList, highlightStyle) {
     }
   }
 
-  console.log(`[VocaSpot] highlightWords: ${insertedCount} span(s) inserted`);
+  if (DEBUG) console.log(`[VocaSpot] highlightWords: ${insertedCount} span(s) inserted`);
 }
