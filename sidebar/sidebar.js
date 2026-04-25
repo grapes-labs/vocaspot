@@ -34,6 +34,15 @@ async function injectSidebar() {
 
 // ─── PART 2 — Show / hide ────────────────────────────────────────────────────
 
+function isSidebarVisible() {
+  if (!_shadowRoot) return false;
+  return _shadowRoot.querySelector('#vs-sidebar').classList.contains('vs-sb-visible');
+}
+
+function isSidebarHidden() {
+  return !isSidebarVisible();
+}
+
 function showSidebar() {
   if (!_shadowRoot) return;
   _shadowRoot.querySelector('#vs-sidebar').classList.add('vs-sb-visible');

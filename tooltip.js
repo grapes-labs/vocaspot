@@ -260,34 +260,43 @@ function init() {
   injectSidebar().catch(err => console.error('[VocaSpot] sidebar injection failed:', err));
 
   document.addEventListener('click', e => {
-    const span = e.target.closest('.vs-highlight');
+    const clickedHighlight = e.target.closest('.vs-highlight');
+    const clickedTooltip   = e.target.closest('#vs-tooltip');
+    const clickedSidebar   = e.target.closest('#vs-sidebar-host');
 
-    if (span) {
+    if (clickedHighlight) {
       e.stopPropagation();
-      _showLoading(span);
-      const context = extractContext(span);
+      _showLoading(clickedHighlight);
+      const context = extractContext(clickedHighlight);
       const token = ++_requestToken;
       chrome.runtime.sendMessage(
-        { action: 'fetchDefinition', payload: { word: span.dataset.lemma } },
+        { action: 'fetchDefinition', payload: { word: clickedHighlight.dataset.lemma } },
         definition => {
           // Service worker may be terminated mid-fetch (MV3); definition
           // arrives as undefined — treat it as a lookup failure.
           if (chrome.runtime.lastError || !definition) {
-            definition = { error: true, word: span.dataset.lemma };
+            definition = { error: true, word: clickedHighlight.dataset.lemma };
           }
           if (token !== _requestToken) return;
-          showTooltip(span, { context, definition });
+          showTooltip(clickedHighlight, { context, definition });
         }
       );
       return;
     }
 
-    if (!e.target.closest('#vs-tooltip')) {
+    if (!clickedTooltip && !clickedSidebar) {
       hideTooltip();
+      // Do NOT hide sidebar here — sidebar has its own close button and manages its own dismissal
     }
   });
 
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') hideTooltip();
+    if (e.key === 'Escape') {
+      if (isSidebarVisible()) {
+        hideSidebar();  // Escape closes sidebar first
+      } else {
+        hideTooltip();  // then tooltip if sidebar already closed
+      }
+    }
   });
 }
