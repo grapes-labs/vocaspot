@@ -1,21 +1,21 @@
 const CEFR_DESCRIPTIONS = {
   A1: 'Beginner — basic everyday words',
   A2: 'Elementary — simple familiar topics',
-  B1: 'Intermediate — main points of clear text',
-  B2: 'Upper-Intermediate — complex texts',
-  C1: 'Advanced — implicit meaning',
-  C2: 'Proficient — everything with ease',
+  B1: 'Intermediate — common work and study words',
+  B2: 'Upper-Intermediate — complex topic vocabulary',
+  C1: 'Advanced — sophisticated and nuanced words',
+  C2: 'Proficient — rare and specialised vocabulary',
 };
 
 let currentSettings = {
-  cefrLevel: 'B1',
+  targetLevel: 'B2',
   highlightStyle: 'underline-dashed',
   disabledSites: [],
 };
 
 async function loadSettings() {
   const stored = await chrome.storage.sync.get({
-    cefrLevel: 'B1',
+    targetLevel: 'B2',
     highlightStyle: 'underline-dashed',
     disabledSites: [],
   });
@@ -24,10 +24,10 @@ async function loadSettings() {
 
 function applyUI() {
   document.querySelectorAll('.vs-cefr-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.level === currentSettings.cefrLevel);
+    btn.classList.toggle('active', btn.dataset.level === currentSettings.targetLevel);
   });
   document.getElementById('cefr-desc').textContent =
-    CEFR_DESCRIPTIONS[currentSettings.cefrLevel] || '';
+    CEFR_DESCRIPTIONS[currentSettings.targetLevel] || '';
 
   document.querySelectorAll('.vs-swatch').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.style === currentSettings.highlightStyle);
@@ -75,7 +75,7 @@ async function notifyTab() {
   chrome.tabs.sendMessage(tab.id, {
     action: 'settingsUpdated',
     settings: {
-      cefrLevel: currentSettings.cefrLevel,
+      targetLevel: currentSettings.targetLevel,
       highlightStyle: currentSettings.highlightStyle,
     },
   }).catch(() => {});
@@ -84,9 +84,9 @@ async function notifyTab() {
 function bindEvents() {
   document.querySelectorAll('.vs-cefr-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      currentSettings.cefrLevel = btn.dataset.level;
+      currentSettings.targetLevel = btn.dataset.level;
       applyUI();
-      await chrome.storage.sync.set({ cefrLevel: currentSettings.cefrLevel });
+      await chrome.storage.sync.set({ targetLevel: currentSettings.targetLevel });
       notifyTab();
     });
   });
