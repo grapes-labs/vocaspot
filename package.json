@@ -9,6 +9,7 @@
     "build:wordlist": "node scripts/build_wordlist.js"
   },
   "dependencies": {
+    "archiver": "^7.0.1",
     "sharp": "^0.34.5"
   }
 }
