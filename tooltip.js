@@ -407,6 +407,7 @@ function init() {
     const clickedHighlight = e.target.closest('.vs-highlight');
     const clickedTooltip   = e.target.closest('#vs-tooltip');
     const clickedSidebar   = e.target.closest('#vs-sidebar-host');
+    const clickedLookup    = e.target.closest('#vs-lookup-btn');
 
     if (clickedHighlight) {
       e.stopPropagation();
@@ -428,7 +429,7 @@ function init() {
       return;
     }
 
-    if (!clickedTooltip && !clickedSidebar) {
+    if (!clickedTooltip && !clickedSidebar && !clickedLookup) {
       hideTooltip();
       // Do NOT hide sidebar here — sidebar has its own close button and manages its own dismissal
     }
