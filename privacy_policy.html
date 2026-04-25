@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VocaSpot — Privacy Policy</title>
+  <style>
+    body {
+      max-width: 720px;
+      margin: 48px auto;
+      padding: 0 24px;
+      font-family: system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      color: #1a1a1a;
+    }
+    h1 { font-size: 28px; margin-bottom: 4px; }
+    h2 { font-size: 18px; margin-top: 36px; border-bottom: 1px solid #e5e5e5; padding-bottom: 6px; }
+    .meta { color: #666; font-size: 14px; margin-bottom: 32px; }
+    a { color: #0D9488; }
+    ul { padding-left: 20px; }
+    li { margin-bottom: 6px; }
+    .highlight-box {
+      background: #f0fdf9;
+      border-left: 4px solid #0D9488;
+      padding: 14px 18px;
+      border-radius: 4px;
+      margin: 24px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>VocaSpot Privacy Policy</h1>
+  <p class="meta">Effective date: 2026-04-25 &nbsp;·&nbsp; Version 1.0.0</p>
+
+  <div class="highlight-box">
+    <strong>Short version:</strong> VocaSpot does not collect, store, or transmit any personal
+    information. The only data that ever leaves your browser is the specific word you click on,
+    sent to a free public dictionary API to fetch its definition.
+  </div>
+
+  <h2>What VocaSpot reads</h2>
+  <p>
+    When you visit a news article, VocaSpot reads the <strong>visible text of that page</strong>
+    entirely within your browser. This text is processed locally to identify words that match
+    your selected CEFR level. It is held in memory only for the duration of the current page
+    visit and is never written to disk, sent to any server, or shared with any third party.
+  </p>
+
+  <h2>What leaves your browser</h2>
+  <p>
+    The <strong>only</strong> outbound network request VocaSpot makes is when you click a
+    highlighted word. The word's base form (lemma) — for example, <em>inflation</em> — is sent
+    to the <a href="https://dictionaryapi.dev" target="_blank" rel="noopener">Free Dictionary API</a>
+    (<code>api.dictionaryapi.dev</code>) to retrieve its definition, pronunciation, and synonyms.
+  </p>
+  <ul>
+    <li>No page URL is sent.</li>
+    <li>No user identity is sent.</li>
+    <li>No browsing history is sent.</li>
+    <li>The word lookup contains no information that could identify you personally.</li>
+  </ul>
+  <p>
+    The Free Dictionary API is a public, unauthenticated service. Please review
+    <a href="https://dictionaryapi.dev" target="_blank" rel="noopener">their terms</a> for
+    details on how they handle query data on their end.
+  </p>
+
+  <h2>What is stored locally</h2>
+  <p>
+    VocaSpot stores the following data <strong>only on your device</strong> using
+    <code>chrome.storage.sync</code> and <code>chrome.storage.local</code>:
+  </p>
+  <ul>
+    <li>Your selected CEFR level (e.g. B1).</li>
+    <li>Your chosen highlight style (underline, background colour).</li>
+    <li>A list of sites where you have disabled the extension.</li>
+    <li>A count of words spotted today (resets daily, stored locally only).</li>
+    <li>Words you have saved for review (stored locally only, up to 100 entries).</li>
+  </ul>
+  <p>
+    Sync storage is shared across your signed-in Chrome profile. None of this data is
+    transmitted to VocaSpot's developers or any third party.
+  </p>
+
+  <h2>Permissions used and why</h2>
+  <ul>
+    <li>
+      <strong>storage</strong> — to save your CEFR level and preferences locally and across devices.
+    </li>
+    <li>
+      <strong>activeTab</strong> — to read the text of the page you are currently viewing so
+      VocaSpot can identify and highlight relevant words. Access is granted only for the tab
+      that is active when you interact with the extension.
+    </li>
+  </ul>
+  <p>VocaSpot requests no other permissions.</p>
+
+  <h2>Analytics and tracking</h2>
+  <p>
+    VocaSpot contains no analytics, telemetry, tracking pixels, or fingerprinting code.
+    No usage data of any kind is collected by the extension's authors.
+  </p>
+
+  <h2>Children's privacy</h2>
+  <p>
+    VocaSpot does not knowingly collect any data from anyone, including children under 13.
+    Because nothing is collected, no special provisions are necessary.
+  </p>
+
+  <h2>Changes to this policy</h2>
+  <p>
+    If the privacy practices of VocaSpot ever change, an updated policy will be published
+    with a new effective date. Significant changes will be noted in the extension's changelog.
+  </p>
+
+  <h2>Contact</h2>
+  <p>
+    Questions or concerns? Open an issue at
+    <a href="https://github.com/viethoanguyen97/vocaspot/issues" target="_blank" rel="noopener">
+      github.com/viethoanguyen97/vocaspot/issues
+    </a>.
+  </p>
+
+</body>
+</html>
