@@ -387,8 +387,18 @@ async function main() {
     }, 1500);
 
     _spaObserver = new MutationObserver((mutations) => {
+      // Exclude mutations that originated inside #vs-tooltip. When showTooltip()
+      // writes the context sentence + definition into the tooltip's child elements,
+      // those childList mutations land here (the tooltip is a direct child of
+      // document.body). Without this filter the accumulated text length regularly
+      // exceeds 200 chars and incorrectly schedules a rescan, so hideTooltip()
+      // fires ~1500 ms later. Manual-lookup tooltips escaped this only because
+      // they omit the context sentence, keeping the char count under the threshold.
+      const pageMutations = mutations.filter(m => !m.target.closest?.('#vs-tooltip'));
+      if (pageMutations.length === 0) return;
+
       // Ignore mutations caused by our own highlight insertions or UI elements.
-      for (const m of mutations) {
+      for (const m of pageMutations) {
         for (const node of m.addedNodes) {
           if (node.nodeType !== Node.ELEMENT_NODE) continue;
           if (node.classList?.contains('vs-highlight')) return;
@@ -397,7 +407,7 @@ async function main() {
       }
       // Only re-scan when a meaningful amount of new text was added.
       let newChars = 0;
-      for (const m of mutations) {
+      for (const m of pageMutations) {
         for (const node of m.addedNodes) {
           newChars += node.textContent?.length ?? 0;
         }
