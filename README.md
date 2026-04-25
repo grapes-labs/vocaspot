@@ -1,4 +1,4 @@
-# VocaSpot
+# VocaSpot - CEFR Vocabulary Highlighter
 
 Spot the right words. Read with confidence.
 
