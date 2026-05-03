@@ -1,6 +1,6 @@
 {
   "name": "vocaspot",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "description": "VocaSpot Chrome extension build scripts",
   "type": "module",
   "private": true,
