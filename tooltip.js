@@ -171,12 +171,13 @@ function showTooltip(span, data, source = 'cefr') {
   }
 
   const contextEl = tip.querySelector('.vs-context');
-  if (isManual) {
+  const contextSentence = data.context?.sentence;
+  if (contextSentence) {
+    contextEl.innerHTML = _sentenceToHtml(contextSentence);
+    contextEl.style.display = '';
+  } else {
     contextEl.innerHTML = '';
     contextEl.style.display = 'none';
-  } else {
-    contextEl.innerHTML = _sentenceToHtml(data.context.sentence);
-    contextEl.style.display = '';
   }
 
   tip.querySelector('.vs-word').textContent = word;
@@ -250,7 +251,7 @@ function showTooltip(span, data, source = 'cefr') {
   fullDefBtn.onclick = () => {
     hideTooltip();
     if (isManual) {
-      populateSidebar(word, word, '', { sentence: '' }, definition);
+      populateSidebar(word, word, '', data.context || { sentence: '' }, definition);
     } else {
       populateSidebar(word, span.dataset.lemma || word, span.dataset.level || '', data.context, definition);
     }
@@ -369,6 +370,11 @@ function showLookupButton(selectedText, rect) {
 
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
+
+    // extractContext MUST run before removeAllRanges — the range position is
+    // lost once the selection is cleared.
+    const context = extractContext(null, selectedText);
+
     removeLookupButton();
     window.getSelection().removeAllRanges();
 
@@ -385,7 +391,7 @@ function showLookupButton(selectedText, rect) {
           definition = { error: true, word: selectedText };
         }
         if (token !== _requestToken) return;
-        showTooltip(rect, { word: selectedText, definition }, 'manual');
+        showTooltip(rect, { word: selectedText, definition, context }, 'manual');
       }
     );
   });

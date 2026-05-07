@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "VocaSpot - CEFR Vocabulary Highlighter",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Highlights words on news pages based on your CEFR level and shows context-aware definitions.",
   "homepage_url": "https://vocaspot.grapeslabs.dev/",
   "permissions": [
